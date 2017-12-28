@@ -11,62 +11,86 @@
 @interface ViewController ()
 @property (weak, nonatomic) IBOutlet UILabel *label;
 @property (weak, nonatomic) IBOutlet UIButton *button;
+@property (weak, nonatomic) IBOutlet UITextField *passwordField;
 @property (strong, nonatomic) RACSignal *networkSig;
+@property (weak, nonatomic) IBOutlet UITextField *userNameField;
 @end
 
 @implementation ViewController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    self.label.text = nil;
-    [self testRAC];
-    
-    [[self firstSig] then:^RACSignal *{
-        
-        return nil;
+//    RAC(self.button,enabled) = [RACSignal combineLatest:@[self.userNameField.rac_textSignal,self.passwordField.rac_textSignal]
+//                                                 reduce:^id(NSString *userName,NSString *password){
+//                                                     return @(userName.length >= 8 && password.length >= 6);
+//                                                 }];
+    self.button.rac_command = [[RACCommand alloc] initWithSignalBlock:^RACSignal *(id input) {
+        return [self login];
     }];
-    
-    
+    [self.button.rac_command.executionSignals subscribeNext:^(id x) {
+        NSLog(@"\nbegin---\n%@\n---end",x);
+
+//        if ([x boolValue] == YES) {
+//            NSLog(@"\nbegin---\n%@\n---end",@"success" );
+//        }
+//        else {
+//            NSLog(@"\nbegin---\n%@\n---end",@"failure");
+//        }
+    }];
 }
 
-- (RACSignal *)firstSig {
-    
-    return [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
-        [subscriber sendNext:@1];
-        [subscriber sendCompleted];
+
+- (RACSignal *)login {
+    RACSignal *sig = [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
+        if ([self.userNameField.text isEqualToString:@"yang2333"] && [self.passwordField.text isEqualToString:@"123456"]) {
+            [subscriber sendNext:@(1)];
+            [subscriber sendCompleted];
+        }
+        else {
+            [subscriber sendNext:@(0)];
+            [subscriber sendCompleted];
+        }
         return nil;
     }];
+    
+    return sig;
 }
 
-- (void)testRAC {
-    __block int callCount = 0;
-    self.networkSig = [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
-        __block int i = 0;
-        callCount ++;
-        NSLog(@"\nbegin---\n callCount ==%d\n---end",callCount );
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.f * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-            i++;
-            [subscriber sendNext:@(i)];
-        });
-        return nil;
-    }];
-    
-    RACSubject *subject = [RACSubject subject];
-    RACMulticastConnection *multicastConnection = [self.networkSig multicast:subject];
-    [multicastConnection connect];
-    
-    [multicastConnection.signal subscribeNext:^(id x) {
-        NSLog(@"\nbegin---\nfirst i ====  %@\n---end", x);
-    }];
-    
-    [multicastConnection.signal subscribeNext:^(id x) {
-        NSLog(@"\nbegin---\nsecond i ====  %@\n---end", x);
-    }];
-    
-    
-    
-    
-    
+//- (RACSignal *)firstSig {
+//
+//    return [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
+//        [subscriber sendNext:@1];
+//        [subscriber sendCompleted];
+//        return nil;
+//    }];
+//}
+
+//- (void)testRAC {
+//    __block int callCount = 0;
+//    self.networkSig = [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
+//        __block int i = 0;
+//        callCount ++;
+//        NSLog(@"\nbegin---\n callCount ==%d\n---end",callCount );
+//        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.f * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+//            i++;
+//            [subscriber sendNext:@(i)];
+//        });
+//        return nil;
+//    }];
+//
+//    RACSubject *subject = [RACSubject subject];
+//    RACMulticastConnection *multicastConnection = [self.networkSig multicast:subject];
+//    [multicastConnection connect];
+//
+//    [multicastConnection.signal subscribeNext:^(id x) {
+//        NSLog(@"\nbegin---\nfirst i ====  %@\n---end", x);
+//    }];
+//
+//    [multicastConnection.signal subscribeNext:^(id x) {
+//        NSLog(@"\nbegin---\nsecond i ====  %@\n---end", x);
+//    }];
+
+
 //    RAC(self.label,text,@"nil的值") = [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
 //        __block int i = 0;
 //        [[self.button rac_signalForControlEvents:UIControlEventTouchDown] subscribeNext:^(id x) {
@@ -245,7 +269,7 @@
 //    [letters sendNext:@"B"];
 //    [letters sendNext:@"C"];
 //    [numbers sendNext:@"2"];
-}
+//}
 
 
 - (void)didReceiveMemoryWarning {
